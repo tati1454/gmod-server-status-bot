@@ -80,7 +80,7 @@ async def getslotsinfo(ctx: commands.Context, host: str=None):
         serverInfo = getServerInfo(host)
         await ctx.send(f"Server name: {serverInfo.name}\nSlots available: {serverInfo.maxPlayers - serverInfo.players}")
     except socket.timeout:
-        await ctx.send("El servidor no estaria respondiendo.")
+        await ctx.send("Server connection timeout. Is the server up?")
 
 
 bot.run(os.environ.get("TOKEN"))
