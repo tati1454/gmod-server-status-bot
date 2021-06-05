@@ -55,13 +55,18 @@ class ServerInfoPacket:
 def getServerInfo(hostname):
     ip, port = hostname.split(":")
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.connect((ip, int(port)))
-        s.send(b"\xFF\xFF\xFF\xFF\x54Source Engine Query\0\0\0\0\0")
-        data = s.recv(100000)
-        data = io.BytesIO(data)
+        s.settimeout(2)
+        try:
+            s.connect((ip, int(port)))
+            s.send(b"\xFF\xFF\xFF\xFF\x54Source Engine Query\0\0\0\0\0")
+            data = s.recv(100000)
+            data = io.BytesIO(data)
 
-    serverInfo = ServerInfoPacket(data)
-    return serverInfo
+            serverInfo = ServerInfoPacket(data)
+            return serverInfo
+        
+        except socket.timeout as e:
+            raise e
 
 bot = commands.Bot("$")
 
@@ -71,8 +76,11 @@ async def getslotsinfo(ctx: commands.Context, host: str=None):
         await ctx.send("$getslotsinfo <ip>:<port>")
         return
 
-    serverInfo = getServerInfo(host)
+    try:
+        serverInfo = getServerInfo(host)
+        await ctx.send(f"Server name: {serverInfo.name}\nSlots available: {serverInfo.maxPlayers - serverInfo.players}")
+    except socket.timeout:
+        await ctx.send("El servidor no estaria respondiendo.")
 
-    await ctx.send(f"{serverInfo.players} player/s of {serverInfo.maxPlayers}")
 
 bot.run(os.environ.get("TOKEN"))
